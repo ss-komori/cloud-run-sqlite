@@ -1,101 +1,147 @@
-import Image from "next/image";
+"use client";
+
+import { useState, useEffect, ChangeEvent } from "react";
+// import { Card, Row, Col, Input, Button, Table } from "antd";
+// import { ColumnsType } from "antd/es/table";
+
+interface DataType {
+  key: string;
+  id: number;
+  content: string;
+  createdAt: string;
+  delete: string;
+}
+
+interface ColumnType<T> {
+  title?: string;
+  dataIndex: keyof T; // string型ではなくkeyof Tに変更
+  width?: string;
+  render?: (value: T[keyof T], record: T) => JSX.Element | string;
+  sorter?: (a: T, b: T) => number;
+}
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const [content, setContent] = useState("");
+  const [dataSource, setDataSource] = useState<DataType[]>([]);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  useEffect(() => {
+    const fetchNotes = async () => {
+      const response = await fetch("/api/notes");
+      const notes = await response.json();
+      setDataSource(notes);
+    };
+    fetchNotes();
+  }, []);
+
+  const handleInputChange = (event: ChangeEvent<HTMLInputElement>) => {
+    setContent(event.target.value);
+  };
+
+  const handleSaveClick = async () => {
+    const response = await fetch("/api/notes", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ content }),
+    });
+
+    const notes = await response.json();
+    setDataSource(notes);
+
+    setContent("");
+  };
+
+  const handleDeleteClick = async (id: number) => {
+    const response = await fetch(`/api/notes?id=${id}`, {
+      method: "DELETE",
+    });
+
+    const notes = await response.json();
+    setDataSource(notes);
+  };
+
+  const columns: ColumnType<DataType>[] = [
+    {
+      title: "created_at",
+      dataIndex: "createdAt",
+      width: "20%",
+      render: (date) => new Date(date).toLocaleDateString(),
+      sorter: (a, b) => Date.parse(a.createdAt) - Date.parse(b.createdAt),
+    },
+    {
+      title: "content",
+      dataIndex: "content",
+      width: "75%",
+    },
+    {
+      dataIndex: "delete",
+      width: "5%",
+      render: (_, record) => (
+        <button
+          className="px-4 py-1 text-sm text-white bg-red-500 rounded-md hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500"
+          onClick={() => handleDeleteClick(record.id)}
+        >
+          Delete
+        </button>
+      ),
+    },
+  ];
+
+  return (
+    <div className="p-4 border rounded-lg shadow-lg max-w-screen-md mx-auto">
+      <h2 className="text-lg font-semibold mb-4">Note</h2>
+      <div className="flex items-center mb-4">
+        <div className="flex-grow">
+          <input
+            type="text"
+            placeholder="content"
+            value={content}
+            onChange={handleInputChange}
+            className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+        <div className="ml-4">
+          <button
+            onClick={handleSaveClick}
+            className="px-6 py-2 bg-blue-500 text-white font-semibold rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            Save
+          </button>
+        </div>
+      </div>
+      <div className="mt-5">
+        <table className="min-w-full bg-white border rounded-lg shadow-md">
+          <thead>
+            <tr>
+              {columns.map((col, index) => (
+                <th
+                  key={index}
+                  className="px-4 py-2 border-b bg-gray-100 text-left text-sm font-semibold text-gray-700"
+                >
+                  {col.title}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {dataSource.map((record) => (
+              <tr key={record.id}>
+                {columns.map((col, index) => (
+                  <td
+                    key={index}
+                    className="px-4 py-2 border-b text-sm text-gray-700"
+                  >
+                    {col.render
+                      ? col.render(record[col.dataIndex], record)
+                      : record[col.dataIndex]}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
