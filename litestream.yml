@@ -1,0 +1,4 @@
+dbs:
+  - path: ./prisma/dev.db
+    replicas:
+      - url: gcs://litestream_next_sample/notes
