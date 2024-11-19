@@ -26,7 +26,5 @@ COPY --from=builder /app/prisma prisma
 COPY --from=builder /app/litestream.yml /etc/litestream.yml
 COPY --from=builder /usr/local/bin/litestream /usr/local/bin/litestream
 COPY --from=builder /app/run.sh /run.sh
-COPY --from=builder /app/tornament-442108-2a718e773bd5.json /etc/gcloud/key.json
-ENV GOOGLE_APPLICATION_CREDENTIALS=/etc/gcloud/key.json
 ENV DATABASE_URL="file:./dev.db"
 CMD ["sh", "run.sh"]
